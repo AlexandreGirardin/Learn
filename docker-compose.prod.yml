@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      target: prod
+    container_name: app-container
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    networks:
+      - app-network
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    secrets:
+      - postgresql_user
+      - postgresql_password
+      - mongo_user
+      - mongo_password
+    depends_on:
+      - postgres
+      - mongodb
+
+  postgres:
+    environment:
+      - POSTGRES_USER=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_DB=${POSTGRES_DB}
+
+  mongodb:
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=/run/secrets/mongo_user
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo_password
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+
+volumes:
+  prod-postgres-data:
+  prod-mongodb-data:
+
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  mongo_user:
+    file: ./secrets/mongo_user.txt
+  mongo_password:
+    file: ./secrets/mongo_password.txt
